@@ -1,5 +1,7 @@
 # 🧊 CubeClash — Android
 
+[![CI](https://github.com/donik1998/cubeclash-android/actions/workflows/ci.yml/badge.svg)](https://github.com/donik1998/cubeclash-android/actions/workflows/ci.yml)
+
 The native Android client for **CubeClash**, a competitive speedcubing app: a solo WCA timer plus live 1v1 head-to-head races. It talks to the same [`cubeclash-backend`](https://github.com/donik1998/cubeclash-backend) as the [Flutter client](https://github.com/donik1998/cubeclash-flutter), and re-implements the same clean layering in idiomatic Kotlin — *one architecture, idiomatic per platform*.
 
 Why a second client at all: big-tech mobile loops interview in native. One well-architected native client proves the language and the platform idioms, while the shared backend and shared architecture keep it *a client* rather than a second product.
@@ -24,8 +26,8 @@ Why a second client at all: big-tech mobile loops interview in native. One well-
 Requires **JDK 21** and the Android SDK (compileSdk 36).
 
 ```bash
-./gradlew assembleDebug     # builds against in-memory fakes — no backend needed
-./gradlew testDebugUnitTest # unit tests
+./gradlew assembleDebug  # builds against in-memory fakes — no backend needed
+./gradlew test           # 53 unit tests (`testDebugUnitTest` alone skips the pure-JVM modules)
 ./gradlew lintDebug
 ```
 
