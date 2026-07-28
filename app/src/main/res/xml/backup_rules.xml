@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  An explicit include list is already an exclude list: anything not named here is not backed up.
+  So the JWT pair simply is not listed — solves and settings are worth restoring, credentials are not.
+-->
+<full-backup-content>
+    <include domain="database" path="cubeclash.db" />
+    <include domain="file" path="datastore/cubeclash_settings.preferences_pb" />
+</full-backup-content>

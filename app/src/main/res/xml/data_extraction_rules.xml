@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same rule as backup_rules.xml: the token store is left out rather than excluded. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="cubeclash.db" />
+        <include domain="file" path="datastore/cubeclash_settings.preferences_pb" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="cubeclash.db" />
+        <include domain="file" path="datastore/cubeclash_settings.preferences_pb" />
+    </device-transfer>
+</data-extraction-rules>

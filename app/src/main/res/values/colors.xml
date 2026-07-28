@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors bg/canvas and brand/primary from the design system, for the pre-Compose window. -->
+    <color name="canvas">#F5F6F8</color>
+    <color name="splash_background">#0C0E12</color>
+    <color name="brand_primary">#2E6BFF</color>
+</resources>

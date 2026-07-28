@@ -1,0 +1,125 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "5238b44ecc3f54ac8a1339b26c1f9476",
+    "entities": [
+      {
+        "tableName": "solves",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`client_id` TEXT NOT NULL, `server_id` TEXT, `event` TEXT NOT NULL, `scramble` TEXT NOT NULL, `scramble_source` TEXT NOT NULL, `time_ms` INTEGER NOT NULL, `penalty` TEXT NOT NULL, `solved_at` INTEGER NOT NULL, `move_count` INTEGER, `solved_count` INTEGER, `attempted_count` INTEGER, `is_pb` INTEGER NOT NULL, `sync_state` TEXT NOT NULL, `deleted_at` INTEGER, PRIMARY KEY(`client_id`))",
+        "fields": [
+          {
+            "fieldPath": "clientId",
+            "columnName": "client_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serverId",
+            "columnName": "server_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "event",
+            "columnName": "event",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scramble",
+            "columnName": "scramble",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scrambleSource",
+            "columnName": "scramble_source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeMs",
+            "columnName": "time_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "penalty",
+            "columnName": "penalty",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "solvedAt",
+            "columnName": "solved_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "moveCount",
+            "columnName": "move_count",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "solvedCount",
+            "columnName": "solved_count",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "attemptedCount",
+            "columnName": "attempted_count",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isPb",
+            "columnName": "is_pb",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncState",
+            "columnName": "sync_state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAt",
+            "columnName": "deleted_at",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "client_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_solves_event_solved_at",
+            "unique": false,
+            "columnNames": [
+              "event",
+              "solved_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_solves_event_solved_at` ON `${TABLE_NAME}` (`event`, `solved_at`)"
+          },
+          {
+            "name": "index_solves_sync_state",
+            "unique": false,
+            "columnNames": [
+              "sync_state"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_solves_sync_state` ON `${TABLE_NAME}` (`sync_state`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5238b44ecc3f54ac8a1339b26c1f9476')"
+    ]
+  }
+}
