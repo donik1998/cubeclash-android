@@ -11,8 +11,8 @@ import com.donik1998.cubeclash.core.domain.repository.UserRepository
 import com.donik1998.cubeclash.core.domain.stats.SessionStatsCalculator
 import com.donik1998.cubeclash.core.model.AuthState
 import com.donik1998.cubeclash.core.model.EventStats
-import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
+import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.RaceMode
@@ -24,7 +24,6 @@ import com.donik1998.cubeclash.core.model.User
 import com.donik1998.cubeclash.core.model.WcaEvent
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -130,6 +129,7 @@ class FakeAuthRepository @Inject constructor(
 class FakeStatsRepository @Inject constructor(
     private val solveRepository: SolveRepository,
     private val calculator: SessionStatsCalculator,
+    private val demoSeed: DemoSeed,
 ) : StatsRepository {
 
     override fun observeStats(event: WcaEvent): Flow<EventStats> =
@@ -139,25 +139,9 @@ class FakeStatsRepository @Inject constructor(
         event: WcaEvent,
         metric: LeaderboardMetric,
         scope: LeaderboardScope,
-    ): DataResult<List<LeaderboardEntry>> {
-        val random = Random(event.ordinal * 17 + metric.ordinal)
-        val names = listOf(
-            "Kaito M." to "JP", "Lena F." to "DE", "Marco R." to "IT", "Doniyor" to "UZ",
-            "Aisha K." to "AE", "Tom B." to "GB", "Sofia P." to "BR", "Yusuf A." to "TR",
-        )
-        var running = 5_400L + random.nextLong(1_500)
-        return DataResult.Success(
-            names.mapIndexed { index, (name, country) ->
-                running += random.nextLong(300, 1_400)
-                LeaderboardEntry(
-                    rank = index + 1,
-                    user = User(id = "u$index", displayName = name, country = country),
-                    value = running,
-                    isCurrentUser = name == "Doniyor",
-                )
-            },
-        )
-    }
+        cursor: String?,
+    ): DataResult<LeaderboardPage> =
+        DataResult.Success(demoSeed.leaderboard(event, metric, scope))
 }
 
 @Singleton

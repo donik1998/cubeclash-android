@@ -1,6 +1,10 @@
 package com.donik1998.cubeclash.core.data.demo
 
 import com.donik1998.cubeclash.core.domain.scramble.ScrambleGenerator
+import com.donik1998.cubeclash.core.model.LeaderboardEntry
+import com.donik1998.cubeclash.core.model.LeaderboardMetric
+import com.donik1998.cubeclash.core.model.LeaderboardPage
+import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.ScrambleSource
 import com.donik1998.cubeclash.core.model.Solve
@@ -62,6 +66,77 @@ class DemoSeed @Inject constructor(
                 syncState = SyncState.SYNCED,
             )
         }
+    }
+
+    /**
+     * A demoable leaderboard page: a realistic global top, a tie sharing 3rd (`RANK()`, so the
+     * next row is 5th, not 4th), one row with no country, and the viewer pinned outside page 1
+     * at rank 1,204. Seeded off the event/metric/scope so the page is stable per selection.
+     */
+    fun leaderboard(
+        event: WcaEvent,
+        metric: LeaderboardMetric,
+        scope: LeaderboardScope,
+    ): LeaderboardPage {
+        val random = Random(event.ordinal * 131 + metric.ordinal * 17 + scope.ordinal)
+        // (displayName, country) — one entry has a null country on purpose.
+        val roster = listOf(
+            "kian_r" to "IR",
+            "mira_v" to "DE",
+            "leo_t" to "BR",
+            // leo_t and nadia_k tie on 3rd; RANK() means the row after them is 5th, not 4th.
+            "nadia_k" to "FR",
+            "sora_h" to null,
+            "owen_p" to "GB",
+            "aiko_m" to "JP",
+            "dario_s" to "IT",
+        )
+        val base = leaderboardCentreMsFor(event)
+
+        // Build strictly increasing values, then force indices 2 and 3 to share one so they tie.
+        val values = LongArray(roster.size)
+        var running = base
+        for (i in roster.indices) {
+            running += random.nextLong(120, 900)
+            values[i] = running
+        }
+        values[3] = values[2]
+
+        val entries = roster.mapIndexed { index, (name, country) ->
+            // RANK(): a row's rank is 1 + the count of strictly better (smaller) values.
+            val rank = 1 + values.count { it < values[index] }
+            LeaderboardEntry(
+                rank = rank,
+                userId = "demo-user-$index",
+                displayName = name,
+                country = country,
+                valueMs = values[index],
+                event = event,
+                solvedAt = Instant.now().minus((index * 6).toLong(), ChronoUnit.HOURS),
+            )
+        }
+
+        val viewer = LeaderboardEntry(
+            rank = 1_204,
+            userId = demoUser.id,
+            displayName = demoUser.displayName,
+            country = demoUser.country,
+            valueMs = base + random.nextLong(9_000, 14_000),
+            event = event,
+            solvedAt = Instant.now().minus(2, ChronoUnit.DAYS),
+        )
+
+        return LeaderboardPage(
+            entries = entries,
+            nextCursor = "demo-cursor-2",
+            viewer = viewer,
+        )
+    }
+
+    private fun leaderboardCentreMsFor(event: WcaEvent): Long = when (event.resultKind) {
+        // Fewest Moves ranks on centi-moves; keep it in that unit so the UI formats it right.
+        com.donik1998.cubeclash.core.model.ResultKind.MOVE_COUNT -> 2_100L
+        else -> (centreMsFor(event) * 0.55).toLong()
     }
 
     /** Roughly what a competent club cuber averages, per event. */

@@ -6,8 +6,8 @@ import com.donik1998.cubeclash.core.domain.common.DataResult
 import com.donik1998.cubeclash.core.domain.repository.SettingsRepository
 import com.donik1998.cubeclash.core.domain.repository.StatsRepository
 import com.donik1998.cubeclash.core.model.EventStats
-import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
+import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.WcaEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,15 +22,27 @@ import kotlinx.coroutines.launch
 
 enum class StatsTab(val label: String) { MINE("My Stats"), LEADERBOARDS("Leaderboards") }
 
+/**
+ * The leaderboard's own loading/success/failure lifecycle, kept separate from the shared
+ * tab/event/scope/metric selection so the UI can render a spinner, an empty state, an error and
+ * a populated list from one exhaustive `when`. [LeaderboardUiState.Success] carries the domain
+ * [LeaderboardPage] directly — no DTO ever reaches the UI.
+ */
+sealed interface LeaderboardUiState {
+    data object Loading : LeaderboardUiState
+    data class Success(val page: LeaderboardPage) : LeaderboardUiState {
+        val isEmpty: Boolean get() = page.entries.isEmpty()
+    }
+    data class Failure(val message: String?) : LeaderboardUiState
+}
+
 data class StatsUiState(
     val tab: StatsTab = StatsTab.MINE,
     val event: WcaEvent = WcaEvent.DEFAULT,
     val stats: EventStats = EventStats(WcaEvent.DEFAULT),
     val scope: LeaderboardScope = LeaderboardScope.GLOBAL,
     val metric: LeaderboardMetric = LeaderboardMetric.SINGLE,
-    val leaderboard: List<LeaderboardEntry> = emptyList(),
-    val isLoading: Boolean = false,
-    val message: String? = null,
+    val leaderboard: LeaderboardUiState = LeaderboardUiState.Loading,
 )
 
 @HiltViewModel
@@ -74,6 +86,8 @@ class StatsViewModel @Inject constructor(
         loadLeaderboard()
     }
 
+    fun retryLeaderboard() = loadLeaderboard()
+
     private fun observe(event: WcaEvent) {
         statsJob?.cancel()
         statsJob = viewModelScope.launch {
@@ -84,14 +98,12 @@ class StatsViewModel @Inject constructor(
     private fun loadLeaderboard() {
         val state = _uiState.value
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            when (val result = statsRepository.leaderboard(state.event, state.metric, state.scope)) {
-                is DataResult.Success ->
-                    _uiState.update { it.copy(leaderboard = result.data, isLoading = false) }
-
-                is DataResult.Failure ->
-                    _uiState.update { it.copy(isLoading = false, message = result.error.message) }
+            _uiState.update { it.copy(leaderboard = LeaderboardUiState.Loading) }
+            val next = when (val result = statsRepository.leaderboard(state.event, state.metric, state.scope)) {
+                is DataResult.Success -> LeaderboardUiState.Success(result.data)
+                is DataResult.Failure -> LeaderboardUiState.Failure(result.error.message)
             }
+            _uiState.update { it.copy(leaderboard = next) }
         }
     }
 }

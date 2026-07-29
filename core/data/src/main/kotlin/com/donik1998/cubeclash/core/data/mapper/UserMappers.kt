@@ -1,7 +1,6 @@
 package com.donik1998.cubeclash.core.data.mapper
 
 import com.donik1998.cubeclash.core.model.EventStats
-import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RacePlayer
@@ -11,7 +10,6 @@ import com.donik1998.cubeclash.core.model.Scramble
 import com.donik1998.cubeclash.core.model.ScrambleNotation
 import com.donik1998.cubeclash.core.model.User
 import com.donik1998.cubeclash.core.model.WcaEvent
-import com.donik1998.cubeclash.core.network.dto.LeaderboardEntryDto
 import com.donik1998.cubeclash.core.network.dto.RaceDto
 import com.donik1998.cubeclash.core.network.dto.RacePlayerDto
 import com.donik1998.cubeclash.core.network.dto.StatsDto
@@ -39,13 +37,6 @@ fun StatsDto.toDomain(): EventStats {
         solveCount = solveCount,
     )
 }
-
-fun LeaderboardEntryDto.toDomain(): LeaderboardEntry = LeaderboardEntry(
-    rank = rank,
-    user = user.toDomain(),
-    value = value,
-    isCurrentUser = isCurrentUser,
-)
 
 fun RacePlayerDto.toDomain(): RacePlayer = RacePlayer(
     userId = userId,

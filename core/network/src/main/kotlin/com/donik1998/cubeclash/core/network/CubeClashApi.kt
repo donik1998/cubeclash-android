@@ -4,7 +4,7 @@ import com.donik1998.cubeclash.core.network.dto.AuthResponse
 import com.donik1998.cubeclash.core.network.dto.CreateRaceRequest
 import com.donik1998.cubeclash.core.network.dto.CreateSolveRequest
 import com.donik1998.cubeclash.core.network.dto.JoinRaceRequest
-import com.donik1998.cubeclash.core.network.dto.LeaderboardEntryDto
+import com.donik1998.cubeclash.core.network.dto.LeaderboardResponseDto
 import com.donik1998.cubeclash.core.network.dto.LoginRequest
 import com.donik1998.cubeclash.core.network.dto.PageDto
 import com.donik1998.cubeclash.core.network.dto.RaceDto
@@ -80,7 +80,8 @@ interface CubeClashApi {
         @Query("metric") metric: String,
         @Query("scope") scope: String,
         @Query("cursor") cursor: String? = null,
-    ): PageDto<LeaderboardEntryDto>
+        @Query("limit") limit: Int? = null,
+    ): LeaderboardResponseDto
 
     @POST("races")
     suspend fun createRace(@Body body: CreateRaceRequest): RaceDto

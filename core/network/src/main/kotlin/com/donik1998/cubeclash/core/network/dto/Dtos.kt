@@ -106,12 +106,36 @@ data class StatsDto(
     @SerialName("solve_count") val solveCount: Int = 0,
 )
 
+/**
+ * One row of `GET /leaderboard`. **Every field is nullable** — the server is not trustworthy
+ * about shape, and decoding `{}` must not throw. The mapper (`:core:data`) is the single place
+ * that decides what a missing field means:
+ *  - missing `rank`, `user_id`, `value_ms` or `display_name` → the row is dropped;
+ *  - missing `country` → the row survives with a null country.
+ */
 @Serializable
-data class LeaderboardEntryDto(
-    val rank: Int,
-    val user: UserDto,
-    val value: Long,
-    @SerialName("is_current_user") val isCurrentUser: Boolean = false,
+data class LeaderboardItemDto(
+    val rank: Int? = null,
+    @SerialName("user_id") val userId: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    /** ISO 3166-1 alpha-2, nullable on the wire and nullable in the domain. */
+    val country: String? = null,
+    /** The metric's ranking value in milliseconds. A `+2` is folded in; a DNF never appears. */
+    @SerialName("value_ms") val valueMs: Long? = null,
+    val event: String? = null,
+    @SerialName("solved_at") val solvedAt: String? = null,
+)
+
+/**
+ * The `GET /leaderboard` envelope. `items` and every element are nullable; `viewer` is a
+ * separate top-level field (the viewer's rank is almost never on page 1, so returning it inside
+ * `items` would be a lie about pagination).
+ */
+@Serializable
+data class LeaderboardResponseDto(
+    val items: List<LeaderboardItemDto?>? = null,
+    @SerialName("next_cursor") val nextCursor: String? = null,
+    val viewer: LeaderboardItemDto? = null,
 )
 
 @Serializable

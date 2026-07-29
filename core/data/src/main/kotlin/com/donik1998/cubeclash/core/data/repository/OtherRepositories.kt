@@ -9,8 +9,8 @@ import com.donik1998.cubeclash.core.domain.repository.StatsRepository
 import com.donik1998.cubeclash.core.domain.scramble.ScrambleGenerator
 import com.donik1998.cubeclash.core.domain.stats.SessionStatsCalculator
 import com.donik1998.cubeclash.core.model.EventStats
-import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
+import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
@@ -59,9 +59,10 @@ class StatsRepositoryImpl @Inject constructor(
         event: WcaEvent,
         metric: LeaderboardMetric,
         scope: LeaderboardScope,
-    ): DataResult<List<LeaderboardEntry>> =
+        cursor: String?,
+    ): DataResult<LeaderboardPage> =
         errors.call {
-            api.leaderboard(event.id, metric.wire, scope.wire).items.map { it.toDomain() }
+            api.leaderboard(event.id, metric.wire, scope.wire, cursor).toDomain(event)
         }
 }
 

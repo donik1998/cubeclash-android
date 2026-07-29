@@ -20,6 +20,19 @@ object Spacing {
     val giant = 64.dp
 }
 
+/**
+ * Fixed component measurements that are neither spacing nor radius — the sizes baked into a
+ * specific control in Figma (an avatar circle, a rank gutter). Kept here so a screen never
+ * hardcodes a bare `34.dp`.
+ */
+@Immutable
+object Sizes {
+    /** The leaderboard row's avatar placeholder circle. */
+    val avatarSm = 34.dp
+    /** The fixed rank gutter that keeps names left-aligned regardless of a 1- vs 5-digit rank. */
+    val rankGutter = 30.dp
+}
+
 @Immutable
 object Radius {
     val sm = RoundedCornerShape(8.dp)

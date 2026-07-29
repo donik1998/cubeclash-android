@@ -29,6 +29,13 @@ val NotoSerif = FontFamily(
  */
 const val TABULAR_FIGURES = "tnum"
 
+/**
+ * Returns a copy of this style with tabular (monospaced) figures enabled. Use it for any number
+ * that updates live or sits in a right-aligned column — leaderboard times, ranks, countdowns —
+ * so column widths stay put frame to frame instead of jittering under proportional digits.
+ */
+fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = TABULAR_FIGURES)
+
 @Immutable
 data class CubeClashTypography(
     val display: TextStyle,

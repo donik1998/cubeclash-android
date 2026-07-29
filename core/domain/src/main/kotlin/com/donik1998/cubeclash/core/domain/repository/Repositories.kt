@@ -4,8 +4,8 @@ import com.donik1998.cubeclash.core.domain.common.DataResult
 import com.donik1998.cubeclash.core.model.AppSettings
 import com.donik1998.cubeclash.core.model.AuthState
 import com.donik1998.cubeclash.core.model.EventStats
-import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
+import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.RaceMode
@@ -67,11 +67,17 @@ interface UserRepository {
 interface StatsRepository {
     fun observeStats(event: WcaEvent): Flow<EventStats>
 
+    /**
+     * One page of the leaderboard for [event]/[metric]/[scope]. [cursor] is `null` for the
+     * first page; the returned [LeaderboardPage.nextCursor] drives pagination. The page also
+     * carries the viewer's own row separately, since it is almost never on page 1.
+     */
     suspend fun leaderboard(
         event: WcaEvent,
         metric: LeaderboardMetric,
         scope: LeaderboardScope,
-    ): DataResult<List<LeaderboardEntry>>
+        cursor: String? = null,
+    ): DataResult<LeaderboardPage>
 }
 
 interface RaceRepository {
