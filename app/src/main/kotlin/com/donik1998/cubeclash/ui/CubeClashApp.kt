@@ -23,10 +23,16 @@ import com.donik1998.cubeclash.feature.profile.ProfileRoute
 import com.donik1998.cubeclash.feature.profile.SettingsRoute
 import com.donik1998.cubeclash.feature.race.RaceRoute
 import com.donik1998.cubeclash.feature.stats.StatsRoute
+import com.donik1998.cubeclash.feature.stats.player.PlayerProfileRoute
 import com.donik1998.cubeclash.feature.timer.TimerRoute
+import com.donik1998.cubeclash.feature.timer.detail.SolveDetailRoute
+import com.donik1998.cubeclash.feature.timer.history.SessionHistoryRoute
+import com.donik1998.cubeclash.navigation.PlayerProfileDestination
 import com.donik1998.cubeclash.navigation.ProfileDestination
 import com.donik1998.cubeclash.navigation.RaceDestination
+import com.donik1998.cubeclash.navigation.SessionHistoryDestination
 import com.donik1998.cubeclash.navigation.SettingsDestination
+import com.donik1998.cubeclash.navigation.SolveDetailDestination
 import com.donik1998.cubeclash.navigation.StatsDestination
 import com.donik1998.cubeclash.navigation.TimerDestination
 import com.donik1998.cubeclash.navigation.TopLevelDestination
@@ -78,12 +84,35 @@ fun CubeClashApp() {
         ) {
             NavHost(navController = navController, startDestination = TimerDestination) {
                 composable<TimerDestination> {
-                    TimerRoute(onImmersiveChange = { immersive = it })
+                    TimerRoute(
+                        onImmersiveChange = { immersive = it },
+                        onOpenHistory = { navController.navigate(SessionHistoryDestination) },
+                    )
+                }
+                composable<SessionHistoryDestination> {
+                    SessionHistoryRoute(
+                        onBack = { navController.popBackStack() },
+                        onOpenSolve = { solveId ->
+                            navController.navigate(SolveDetailDestination(solveId))
+                        },
+                    )
+                }
+                composable<SolveDetailDestination> {
+                    SolveDetailRoute(onBack = { navController.popBackStack() })
                 }
                 composable<RaceDestination> {
                     RaceRoute(onImmersiveChange = { immersive = it })
                 }
-                composable<StatsDestination> { StatsRoute() }
+                composable<StatsDestination> {
+                    StatsRoute(
+                        onOpenPlayer = { userId ->
+                            navController.navigate(PlayerProfileDestination(userId))
+                        },
+                    )
+                }
+                composable<PlayerProfileDestination> {
+                    PlayerProfileRoute(onBack = { navController.popBackStack() })
+                }
                 composable<ProfileDestination> {
                     ProfileRoute(
                         // Friends has no destination yet — a harmless no-op until it lands.

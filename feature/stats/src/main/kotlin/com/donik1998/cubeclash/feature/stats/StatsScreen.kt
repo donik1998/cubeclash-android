@@ -32,6 +32,7 @@ import com.donik1998.cubeclash.core.ui.SessionStatsRow
  */
 @Composable
 fun StatsRoute(
+    onOpenPlayer: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: StatsViewModel = hiltViewModel(),
 ) {
@@ -43,6 +44,7 @@ fun StatsRoute(
         onSelectScope = viewModel::selectScope,
         onSelectMetric = viewModel::selectMetric,
         onRetry = viewModel::retryLeaderboard,
+        onOpenPlayer = onOpenPlayer,
         modifier = modifier,
     )
 }
@@ -61,6 +63,7 @@ fun StatsScreen(
     onSelectScope: (LeaderboardScope) -> Unit,
     onSelectMetric: (LeaderboardMetric) -> Unit,
     onRetry: () -> Unit,
+    onOpenPlayer: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -105,6 +108,7 @@ fun StatsScreen(
                     event = uiState.event,
                     onSelectMetric = onSelectMetric,
                     onRetry = onRetry,
+                    onOpenPlayer = onOpenPlayer,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -173,6 +177,7 @@ private fun StatsScreenLeaderboardsPreview() {
             onSelectScope = {},
             onSelectMetric = {},
             onRetry = {},
+            onOpenPlayer = {},
         )
     }
 }
@@ -189,6 +194,7 @@ private fun StatsScreenMinePreview() {
             onSelectScope = {},
             onSelectMetric = {},
             onRetry = {},
+            onOpenPlayer = {},
         )
     }
 }

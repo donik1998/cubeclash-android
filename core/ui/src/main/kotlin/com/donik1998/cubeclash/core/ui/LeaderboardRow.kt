@@ -2,6 +2,7 @@ package com.donik1998.cubeclash.core.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,10 @@ import java.util.Locale
  * place and the times align down the right edge.
  *
  * There is no avatar in the domain model; the circle renders [initialsOf] the display name.
+ *
+ * [onClick], when supplied, makes the whole card tappable — tapping a name opens that player's
+ * public profile. It stays optional so the pinned viewer row (which is "you", already on your own
+ * profile tab) can be left inert.
  */
 @Composable
 fun LeaderboardRow(
@@ -46,6 +51,7 @@ fun LeaderboardRow(
     event: WcaEvent,
     modifier: Modifier = Modifier,
     isViewer: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     val colors = CubeClashTheme.colors
     Row(
@@ -60,6 +66,7 @@ fun LeaderboardRow(
                 color = if (isViewer) colors.brandPrimary else colors.borderSubtle,
                 shape = Radius.button,
             )
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Spacing.sm),

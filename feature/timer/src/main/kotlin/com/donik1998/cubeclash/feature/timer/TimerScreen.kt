@@ -37,6 +37,7 @@ import com.donik1998.cubeclash.feature.timer.component.TimerHero
 @Composable
 fun TimerRoute(
     onImmersiveChange: (Boolean) -> Unit,
+    onOpenHistory: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TimerViewModel = hiltViewModel(),
 ) {
@@ -45,13 +46,19 @@ fun TimerRoute(
     // Hiding the nav bar is a side effect, not part of drawing this frame.
     LaunchedEffect(uiState.isImmersive) { onImmersiveChange(uiState.isImmersive) }
 
-    TimerScreen(uiState = uiState, onAction = viewModel::onAction, modifier = modifier)
+    TimerScreen(
+        uiState = uiState,
+        onAction = viewModel::onAction,
+        onOpenHistory = onOpenHistory,
+        modifier = modifier,
+    )
 }
 
 @Composable
 fun TimerScreen(
     uiState: TimerUiState,
     onAction: (TimerAction) -> Unit,
+    onOpenHistory: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -88,7 +95,13 @@ fun TimerScreen(
                         onClick = { onAction(TimerAction.OpenEventPicker) },
                         leading = { EventIcon(event = uiState.event, active = true, size = 16.dp) },
                     )
-                    CubeGhostButton(text = "New", onClick = { onAction(TimerAction.NewScramble) })
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CubeGhostButton(text = "History", onClick = onOpenHistory)
+                        CubeGhostButton(text = "New", onClick = { onAction(TimerAction.NewScramble) })
+                    }
                 }
 
                 SegmentedControl(

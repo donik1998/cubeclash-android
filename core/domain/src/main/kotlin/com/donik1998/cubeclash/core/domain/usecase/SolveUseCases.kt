@@ -64,6 +64,17 @@ class ObserveSessionUseCase @Inject constructor(
     operator fun invoke(event: WcaEvent): Flow<List<Solve>> = solveRepository.observeSession(event)
 }
 
+/**
+ * The full solve history for [event], newest first. Unlike [ObserveSessionUseCase] this is not
+ * scoped to the current practice session — it is every solve the device knows about, paged in by
+ * the repository as the list scrolls.
+ */
+class ObserveHistoryUseCase @Inject constructor(
+    private val solveRepository: SolveRepository,
+) {
+    operator fun invoke(event: WcaEvent): Flow<List<Solve>> = solveRepository.observeHistory(event)
+}
+
 class ObserveSessionStatsUseCase @Inject constructor(
     private val solveRepository: SolveRepository,
     private val calculator: SessionStatsCalculator,

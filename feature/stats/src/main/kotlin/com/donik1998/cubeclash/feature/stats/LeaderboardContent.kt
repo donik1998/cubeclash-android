@@ -46,6 +46,7 @@ fun LeaderboardContent(
     event: WcaEvent,
     onSelectMetric: (LeaderboardMetric) -> Unit,
     onRetry: () -> Unit,
+    onOpenPlayer: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -73,7 +74,11 @@ fun LeaderboardContent(
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    LeaderboardList(page = state.page, event = event)
+                    LeaderboardList(
+                        page = state.page,
+                        event = event,
+                        onOpenPlayer = onOpenPlayer,
+                    )
                 }
         }
     }
@@ -109,6 +114,7 @@ private fun MetricChipRow(
 private fun LeaderboardList(
     page: LeaderboardPage,
     event: WcaEvent,
+    onOpenPlayer: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -117,7 +123,11 @@ private fun LeaderboardList(
         contentPadding = PaddingValues(bottom = Spacing.md),
     ) {
         items(page.entries, key = { it.userId }) { entry ->
-            LeaderboardRow(entry = entry, event = event)
+            LeaderboardRow(
+                entry = entry,
+                event = event,
+                onClick = { onOpenPlayer(entry.userId) },
+            )
         }
         page.viewer?.let { viewer ->
             item(key = "gap") { LeaderboardGap() }
@@ -200,6 +210,7 @@ private fun LeaderboardContentPopulatedPreview() {
                 event = WcaEvent.DEFAULT,
                 onSelectMetric = {},
                 onRetry = {},
+                onOpenPlayer = {},
             )
         }
     }
@@ -217,6 +228,7 @@ private fun LeaderboardContentLoadingPreview() {
                 event = WcaEvent.DEFAULT,
                 onSelectMetric = {},
                 onRetry = {},
+                onOpenPlayer = {},
             )
         }
     }
@@ -234,6 +246,7 @@ private fun LeaderboardContentEmptyPreview() {
                 event = WcaEvent.DEFAULT,
                 onSelectMetric = {},
                 onRetry = {},
+                onOpenPlayer = {},
             )
         }
     }
@@ -251,6 +264,7 @@ private fun LeaderboardContentErrorPreview() {
                 event = WcaEvent.DEFAULT,
                 onSelectMetric = {},
                 onRetry = {},
+                onOpenPlayer = {},
             )
         }
     }
