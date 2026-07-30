@@ -1,0 +1,62 @@
+# Run with: bundle exec fastlane <lane>
+default_platform(:android)
+
+REPO_ROOT = File.expand_path("..", __dir__)
+
+def require_release_keystore!
+  props = File.join(REPO_ROOT, "key.properties")
+  UI.user_error!(<<~MSG) unless File.exist?(props)
+    key.properties is missing, so this build would be signed with the DEBUG key
+    and could never be uploaded to Play.
+
+    Expected: #{props}
+    It should define storeFile, storePassword, keyAlias, keyPassword.
+  MSG
+end
+
+platform :android do
+  desc "Unit tests across every module (JVM modules included)"
+  lane :test do
+    # `test`, not `testDebugUnitTest` — the latter silently skips :core:model
+    # and :core:domain, which are pure-JVM.
+    gradle(task: "test")
+  end
+
+  desc "Lint"
+  lane :lint do
+    gradle(task: "lintDebug")
+  end
+
+  desc "Debug APK"
+  lane :debug do
+    gradle(task: "assembleDebug")
+  end
+
+  desc "Signed release AAB for Play (refuses to run without the upload keystore)"
+  lane :release do
+    require_release_keystore!
+    gradle(task: "clean")
+    gradle(task: "bundleRelease")
+    UI.success("AAB: app/build/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Signed release APK — sideload testing only, Play needs the AAB"
+  lane :release_apk do
+    require_release_keystore!
+    gradle(task: "assembleRelease")
+  end
+
+  desc "Build and upload to Play internal testing"
+  lane :internal do
+    UI.user_error!("Set PLAY_STORE_JSON_KEY to your Play service-account JSON first.") if (ENV["PLAY_STORE_JSON_KEY"] || "").empty?
+    release
+    upload_to_play_store(
+      track: "internal",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+release_status: "draft"
+    )
+  end
+end

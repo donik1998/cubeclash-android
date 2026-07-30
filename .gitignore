@@ -23,3 +23,14 @@ local.properties
 
 # macOS
 .DS_Store
+
+# fastlane / bundler
+vendor/bundle/
+.bundle/
+fastlane/report.xml
+fastlane/README.md
+
+# Release signing — NEVER commit
+key.properties
+*.jks
+*.keystore

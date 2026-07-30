@@ -1,0 +1,8 @@
+# Play Console package name.
+package_name("com.donik1998.cubeclash")
+
+# Google Play service-account JSON, used by upload_to_play_store.
+# Create it in Play Console -> Setup -> API access, download the JSON,
+# store it OUTSIDE this repo, and point PLAY_STORE_JSON_KEY at it.
+# Never commit the JSON.
+json_key_file(ENV["PLAY_STORE_JSON_KEY"] || "")

@@ -1,9 +1,26 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.cubeclash.android.application)
     alias(libs.plugins.cubeclash.android.application.compose)
     alias(libs.plugins.cubeclash.android.hilt)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// Release signing credentials, read from `key.properties` at the repo root.
+//
+// That file is gitignored and holds the upload keystore's path and passwords —
+// it is deliberately NOT in version control and never will be. When it is
+// absent (CI, a fresh clone, a contributor without the key) the release build
+// falls back to debug signing so `assembleRelease` still compiles and is
+// verifiable, which is what the original placeholder was protecting. The only
+// thing that changes without the file is that the artefact is unshippable,
+// which is correct: an unsigned-by-the-real-key build should never reach a store.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("key.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val hasReleaseKeystore = keystoreProperties.getProperty("storeFile") != null
 
 android {
     namespace = "com.donik1998.cubeclash"
@@ -13,6 +30,17 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseKeystore) {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -25,8 +53,11 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Debug signing so `assembleRelease` is verifiable in CI before there is a keystore.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
