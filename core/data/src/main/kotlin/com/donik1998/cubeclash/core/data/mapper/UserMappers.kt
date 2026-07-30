@@ -20,7 +20,6 @@ fun UserDto.toDomain(): User = User(
     displayName = displayName,
     email = email,
     country = country,
-    avatarUrl = avatarUrl,
     elo = elo,
     solveCount = solveCount,
 )
@@ -42,7 +41,6 @@ fun RacePlayerDto.toDomain(): RacePlayer = RacePlayer(
     userId = userId,
     displayName = displayName,
     country = country,
-    avatarUrl = avatarUrl,
     elo = elo,
     isReady = ready,
     finalTimeMs = timeMs,

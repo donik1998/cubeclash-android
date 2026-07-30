@@ -24,8 +24,9 @@ private const val TAG = "LeaderboardMapper"
  *    rankable; the row simply renders without a country line, so it **stays nullable**.
  *  - **`event`** defaults to the requested event when absent — every row on a `?event=3x3`
  *    page is a 3×3 row, so a missing echo is neutral, not load-bearing.
- *  - **`solved_at`** is parsed leniently: an unparseable timestamp is not worth dropping a
- *    ranked row over, so it falls back to [Instant.EPOCH].
+ *  - **`solved_at`** is parsed leniently and **stays nullable**: a missing or unparseable
+ *    timestamp is not worth dropping a ranked row over, and fabricating [Instant.EPOCH] (1970)
+ *    would be a claim rather than a blank — so it maps to `null`, matching iOS and Flutter.
  *
  * One malformed element never blanks the list — [toDomain] on the response maps each item,
  * drops the nulls, and keeps the rest.
@@ -50,7 +51,7 @@ fun LeaderboardItemDto.toDomain(requestedEvent: WcaEvent): LeaderboardEntry? {
         country = country?.trim()?.takeIf { it.isNotEmpty() },
         valueMs = valueMs,
         event = event?.let { WcaEvent.fromId(it) } ?: requestedEvent,
-        solvedAt = solvedAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: Instant.EPOCH,
+        solvedAt = solvedAt?.let { runCatching { Instant.parse(it) }.getOrNull() },
     )
 }
 

@@ -29,8 +29,7 @@ data class UserDto(
     @SerialName("display_name") val displayName: String,
     val email: String? = null,
     val country: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null,
-    val elo: Int = 1200,
+    val elo: Int = 1000,
     @SerialName("solve_count") val solveCount: Int = 0,
 )
 
@@ -207,7 +206,6 @@ data class RacePlayerDto(
     @SerialName("user_id") val userId: String,
     @SerialName("display_name") val displayName: String,
     val country: String? = null,
-    @SerialName("avatar_url") val avatarUrl: String? = null,
     val elo: Int? = null,
     val ready: Boolean = false,
     @SerialName("time_ms") val timeMs: Long? = null,

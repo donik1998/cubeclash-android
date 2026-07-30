@@ -47,7 +47,12 @@ data class LeaderboardEntry(
     val country: String?,
     val valueMs: Long,
     val event: WcaEvent,
-    val solvedAt: java.time.Instant,
+    /**
+     * When the ranking solve was set, or `null` when the server omits or garbles it — a missing
+     * timestamp is not worth dropping a ranked row over, and fabricating [java.time.Instant.EPOCH]
+     * (1970) would be a claim rather than a blank. iOS and Flutter keep it nullable too.
+     */
+    val solvedAt: java.time.Instant?,
 )
 
 /**

@@ -69,9 +69,15 @@ class LeaderboardMappersTest {
     }
 
     @Test
-    fun `unparseable solved_at falls back to EPOCH rather than dropping the row`() {
+    fun `missing solved_at stays null rather than fabricating 1970`() {
+        val entry = validItem(solvedAt = null).toDomain(event)!!
+        assertNull(entry.solvedAt)
+    }
+
+    @Test
+    fun `unparseable solved_at stays null rather than dropping the row or fabricating 1970`() {
         val entry = validItem(solvedAt = "not-a-date").toDomain(event)!!
-        assertEquals(Instant.EPOCH, entry.solvedAt)
+        assertNull(entry.solvedAt)
     }
 
     @Test

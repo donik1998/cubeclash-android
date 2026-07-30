@@ -42,7 +42,6 @@ data class RacePlayer(
     val userId: String,
     val displayName: String,
     val country: String? = null,
-    val avatarUrl: String? = null,
     val elo: Int? = null,
     val isReady: Boolean = false,
     /** Live pace from `race:opponent_progress`, or the player's own running clock. */

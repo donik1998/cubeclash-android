@@ -5,7 +5,6 @@ data class User(
     val displayName: String,
     val email: String? = null,
     val country: String? = null,
-    val avatarUrl: String? = null,
     val elo: Int = 1200,
     val solveCount: Int = 0,
 )
