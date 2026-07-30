@@ -9,6 +9,7 @@ import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.PlayerProfile
+import com.donik1998.cubeclash.core.model.PublicProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.Scramble
@@ -63,6 +64,14 @@ interface UserRepository {
     suspend fun refreshMe(): DataResult<User>
 
     suspend fun updateProfile(displayName: String?, country: String?): DataResult<User>
+
+    /**
+     * The public profile of another player via `GET /users/:id`. Distinct from [ProfileRepository],
+     * which serves the viewer's own aggregate — this is someone else's page and carries a
+     * viewer-relative head-to-head instead of a rank. A payload with no usable identity is dropped
+     * by the mapper and surfaces here as a `DataResult.Failure` rather than a half-blank success.
+     */
+    suspend fun publicProfile(id: String): DataResult<PublicProfile>
 }
 
 interface StatsRepository {

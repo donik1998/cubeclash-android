@@ -6,6 +6,7 @@ import com.donik1998.cubeclash.core.domain.repository.AuthRepository
 import com.donik1998.cubeclash.core.domain.repository.TokenStore
 import com.donik1998.cubeclash.core.domain.repository.UserRepository
 import com.donik1998.cubeclash.core.model.AuthState
+import com.donik1998.cubeclash.core.model.PublicProfile
 import com.donik1998.cubeclash.core.model.User
 import com.donik1998.cubeclash.core.network.ApiErrorMapper
 import com.donik1998.cubeclash.core.network.CubeClashApi
@@ -94,5 +95,11 @@ class AuthRepositoryImpl @Inject constructor(
         }.let { result ->
             if (result is DataResult.Success) cachedUser.value = result.data
             result
+        }
+
+    override suspend fun publicProfile(id: String): DataResult<PublicProfile> =
+        errors.call {
+            api.publicProfile(id).toDomain()
+                ?: throw IllegalStateException("Public profile response had no usable user.")
         }
 }

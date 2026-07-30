@@ -6,8 +6,10 @@ import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
+import com.donik1998.cubeclash.core.model.HeadToHead
 import com.donik1998.cubeclash.core.model.PlayerProfile
 import com.donik1998.cubeclash.core.model.ProfileRank
+import com.donik1998.cubeclash.core.model.PublicProfile
 import com.donik1998.cubeclash.core.model.ScrambleSource
 import com.donik1998.cubeclash.core.model.Solve
 import com.donik1998.cubeclash.core.model.SyncState
@@ -162,6 +164,38 @@ class DemoSeed @Inject constructor(
         losses = 102,
         friendCount = 48,
     )
+
+    /**
+     * A demoable *public* profile for some other player, keyed off [id] so different ids give
+     * stable, distinct people. The head-to-head is present and non-zero so the demo exercises the
+     * "we have raced" state; a fresh-account id (`"nobody"`) returns the all-null, never-raced
+     * shape so both branches of the UI are reachable offline.
+     */
+    fun publicProfile(id: String): PublicProfile {
+        if (id == "nobody") {
+            return PublicProfile(
+                id = id,
+                displayName = "Fresh Cuber",
+                country = null,
+                elo = 1000,
+                bestSingleMs = null,
+                bestAo5Ms = null,
+                bestAo12Ms = null,
+                headToHead = null,
+            )
+        }
+        val random = Random(id.hashCode())
+        return PublicProfile(
+            id = id,
+            displayName = listOf("Probe", "Feliks_W", "Yiheng", "Max_P").random(random),
+            country = listOf("UZ", "AU", "CN", "US", null).random(random),
+            elo = 1_400 + random.nextInt(400),
+            bestSingleMs = 5_200L + random.nextInt(3_000),
+            bestAo5Ms = 6_100L + random.nextInt(3_000),
+            bestAo12Ms = 6_600L + random.nextInt(3_000),
+            headToHead = HeadToHead(wins = random.nextInt(6), losses = random.nextInt(6)),
+        )
+    }
 
     private fun leaderboardCentreMsFor(event: WcaEvent): Long = when (event.resultKind) {
         // Fewest Moves ranks on centi-moves; keep it in that unit so the UI formats it right.

@@ -8,6 +8,7 @@ import com.donik1998.cubeclash.core.network.dto.LeaderboardResponseDto
 import com.donik1998.cubeclash.core.network.dto.LoginRequest
 import com.donik1998.cubeclash.core.network.dto.PageDto
 import com.donik1998.cubeclash.core.network.dto.ProfileResponseDto
+import com.donik1998.cubeclash.core.network.dto.PublicUserResponseDto
 import com.donik1998.cubeclash.core.network.dto.RaceDto
 import com.donik1998.cubeclash.core.network.dto.RefreshRequest
 import com.donik1998.cubeclash.core.network.dto.RegisterRequest
@@ -57,6 +58,13 @@ interface CubeClashApi {
         @Query("event") event: String = "3x3",
         @Query("rank_scope") rankScope: String = "global",
     ): ProfileResponseDto
+
+    /**
+     * A public player profile, wrapped in `{ user }`. Viewer-relative: `head_to_head` reflects the
+     * caller's own record against this player and is null when the two have never raced.
+     */
+    @GET("users/{id}")
+    suspend fun publicProfile(@Path("id") id: String): PublicUserResponseDto
 
     @GET("solves")
     suspend fun solves(

@@ -184,6 +184,56 @@ data class ProfileStatsDto(
     val losses: Int? = null,
 )
 
+/**
+ * The `GET /users/:id` envelope — a public player profile, wrapped in `{"user": …}` exactly like
+ * [ProfileResponseDto]. The wrapper itself and every nested field is nullable, so decoding `{}`
+ * never throws; the mapper (`:core:data`) is the single place that decides what a missing field
+ * means.
+ */
+@Serializable
+data class PublicUserResponseDto(val user: PublicUserDto? = null)
+
+/**
+ * One public player as returned by `GET /users/:id`. **Every field is nullable except [id]** —
+ * the house rule: identity is load-bearing, so an un-renderable row (no id) is dropped by the
+ * mapper rather than fabricated.
+ *
+ * `ao5`/`ao12` here are **best-ever** values (mapped to `bestAo5Ms`/`bestAo12Ms`), NOT the current
+ * rolling averages that the identically-named fields on [StatsDto] carry. `best_single_ms`, `ao5`
+ * and `ao12` are all null for a fresh account with no solves (verified against the live server).
+ *
+ * There is deliberately **no `avatar_url` and no `solve_count`** on this endpoint — the avatar is
+ * an initials placeholder derived from `display_name`, and solve count is not part of the public
+ * shape. Neither is invented here.
+ */
+@Serializable
+data class PublicUserDto(
+    val id: String,
+    @SerialName("display_name") val displayName: String? = null,
+    /** ISO 3166-1 alpha-2, nullable on the wire and nullable in the domain. */
+    val country: String? = null,
+    val elo: Int? = null,
+    /** Best-ever single in milliseconds. Null for an account with no solves. */
+    @SerialName("best_single_ms") val bestSingleMs: Long? = null,
+    /** Best-ever average-of-5 in milliseconds. Null with too few solves. NOT the rolling ao5. */
+    val ao5: Long? = null,
+    /** Best-ever average-of-12 in milliseconds. Null with too few solves. NOT the rolling ao12. */
+    val ao12: Long? = null,
+    /**
+     * The viewer's record against this player. **Null means "never raced"** and is a distinct
+     * state from a present `{wins, losses}` (which may itself be `{0, 0}`). Kept nullable all the
+     * way to the model.
+     */
+    @SerialName("head_to_head") val headToHead: HeadToHeadDto? = null,
+)
+
+/** The `head_to_head` object. Both counts nullable; the mapper defaults a missing one to 0. */
+@Serializable
+data class HeadToHeadDto(
+    val wins: Int? = null,
+    val losses: Int? = null,
+)
+
 @Serializable
 data class CreateRaceRequest(val mode: String, val event: String)
 

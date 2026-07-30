@@ -17,6 +17,7 @@ import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
 import com.donik1998.cubeclash.core.model.PlayerProfile
+import com.donik1998.cubeclash.core.model.PublicProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.RaceStatus
@@ -125,6 +126,9 @@ class FakeAuthRepository @Inject constructor(
         state.value = AuthState.SignedIn(updated)
         return DataResult.Success(updated)
     }
+
+    override suspend fun publicProfile(id: String): DataResult<PublicProfile> =
+        DataResult.Success(demoSeed.publicProfile(id))
 }
 
 @Singleton
