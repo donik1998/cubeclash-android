@@ -7,6 +7,7 @@ import com.donik1998.cubeclash.core.network.dto.JoinRaceRequest
 import com.donik1998.cubeclash.core.network.dto.LeaderboardResponseDto
 import com.donik1998.cubeclash.core.network.dto.LoginRequest
 import com.donik1998.cubeclash.core.network.dto.PageDto
+import com.donik1998.cubeclash.core.network.dto.ProfileResponseDto
 import com.donik1998.cubeclash.core.network.dto.RaceDto
 import com.donik1998.cubeclash.core.network.dto.RefreshRequest
 import com.donik1998.cubeclash.core.network.dto.RegisterRequest
@@ -45,6 +46,17 @@ interface CubeClashApi {
 
     @PATCH("me")
     suspend fun updateMe(@Body body: Map<String, String?>): UserDto
+
+    /**
+     * The You · Profile aggregate. Additive to the thin `GET /me`, which still returns just
+     * `{ user }`. `event`/`rank_scope` scope the rank and best-single fields; the response
+     * echoes the event it used so the client never has to guess.
+     */
+    @GET("me/profile")
+    suspend fun profile(
+        @Query("event") event: String = "3x3",
+        @Query("rank_scope") rankScope: String = "global",
+    ): ProfileResponseDto
 
     @GET("solves")
     suspend fun solves(

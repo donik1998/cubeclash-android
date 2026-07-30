@@ -2,54 +2,56 @@ package com.donik1998.cubeclash.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.donik1998.cubeclash.core.domain.repository.SettingsRepository
-import com.donik1998.cubeclash.core.domain.repository.UserRepository
-import com.donik1998.cubeclash.core.domain.usecase.SignOutUseCase
-import com.donik1998.cubeclash.core.model.AppSettings
-import com.donik1998.cubeclash.core.model.ThemeMode
-import com.donik1998.cubeclash.core.model.TimerStyle
-import com.donik1998.cubeclash.core.model.User
+import com.donik1998.cubeclash.core.domain.common.DataResult
+import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
+import com.donik1998.cubeclash.core.model.LeaderboardScope
+import com.donik1998.cubeclash.core.model.PlayerProfile
+import com.donik1998.cubeclash.core.model.WcaEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class ProfileUiState(
-    val user: User? = null,
-    val settings: AppSettings = AppSettings(),
-)
+/**
+ * The You · Profile aggregate's loading/success/failure lifecycle. [Success] carries the domain
+ * [PlayerProfile] directly — no DTO ever reaches the UI — and [Failure] carries a renderable
+ * message plus a retry affordance.
+ */
+sealed interface ProfileUiState {
+    data object Loading : ProfileUiState
+    data class Success(val profile: PlayerProfile) : ProfileUiState
+    data class Failure(val message: String?) : ProfileUiState
+}
 
+/**
+ * Owns only the profile aggregate. Settings (theme/timer/inspection/haptics/sign-out) moved to
+ * [SettingsViewModel] so the Settings screen can drive them independently (spec §11.7).
+ */
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository,
-    private val settingsRepository: SettingsRepository,
-    private val signOutUseCase: SignOutUseCase,
+    private val profileRepository: ProfileRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
+    private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            userRepository.observeMe().collect { user -> _uiState.update { it.copy(user = user) } }
-        }
-        viewModelScope.launch {
-            settingsRepository.settings.collect { settings -> _uiState.update { it.copy(settings = settings) } }
-        }
-        viewModelScope.launch { userRepository.refreshMe() }
+        load()
     }
 
-    fun setThemeMode(mode: ThemeMode) = viewModelScope.launch { settingsRepository.setThemeMode(mode) }
+    fun onRetry() = load()
 
-    fun setTimerStyle(style: TimerStyle) = viewModelScope.launch { settingsRepository.setTimerStyle(style) }
-
-    fun setInspection(enabled: Boolean) =
-        viewModelScope.launch { settingsRepository.setInspectionEnabled(enabled) }
-
-    fun setHaptics(enabled: Boolean) = viewModelScope.launch { settingsRepository.setHapticsEnabled(enabled) }
-
-    fun signOut() = viewModelScope.launch { signOutUseCase() }
+    private fun load() {
+        viewModelScope.launch {
+            _uiState.value = ProfileUiState.Loading
+            _uiState.value = when (
+                val result = profileRepository.profile(WcaEvent.THREE, LeaderboardScope.GLOBAL)
+            ) {
+                is DataResult.Success -> ProfileUiState.Success(result.data)
+                is DataResult.Failure -> ProfileUiState.Failure(result.error.message)
+            }
+        }
+    }
 }

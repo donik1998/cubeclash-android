@@ -18,6 +18,11 @@ data object StatsDestination
 @Serializable
 data object ProfileDestination
 
+/** Pushed on top of the You tab — the old Profile screen's settings form, reachable from the
+ *  Settings menu row rather than being a tab of its own. */
+@Serializable
+data object SettingsDestination
+
 @Serializable
 data object AuthDestination
 

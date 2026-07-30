@@ -6,6 +6,8 @@ import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
+import com.donik1998.cubeclash.core.model.PlayerProfile
+import com.donik1998.cubeclash.core.model.ProfileRank
 import com.donik1998.cubeclash.core.model.ScrambleSource
 import com.donik1998.cubeclash.core.model.Solve
 import com.donik1998.cubeclash.core.model.SyncState
@@ -132,6 +134,34 @@ class DemoSeed @Inject constructor(
             viewer = viewer,
         )
     }
+
+    /**
+     * The You · Profile aggregate for the demo user — the screenshot's values: best 8.42s
+     * (`8_420` ms), 3,204 solves, a 0.68 win rate, global rank #1,204, 48 friends, country UZ.
+     * Rank and best echo the requested [event]/[scope] so the fake tracks the real contract.
+     */
+    fun profile(
+        event: WcaEvent = WcaEvent.THREE,
+        scope: LeaderboardScope = LeaderboardScope.GLOBAL,
+    ): PlayerProfile = PlayerProfile(
+        id = demoUser.id,
+        displayName = demoUser.displayName,
+        country = demoUser.country,
+        elo = demoUser.elo,
+        rank = ProfileRank(
+            position = 1_204,
+            event = event,
+            metric = "single",
+            scope = scope,
+        ),
+        bestSingleMs = 8_420,
+        bestSingleEvent = event,
+        totalSolves = 3_204,
+        winRate = 0.68,
+        wins = 217,
+        losses = 102,
+        friendCount = 48,
+    )
 
     private fun leaderboardCentreMsFor(event: WcaEvent): Long = when (event.resultKind) {
         // Fewest Moves ranks on centi-moves; keep it in that unit so the UI formats it right.

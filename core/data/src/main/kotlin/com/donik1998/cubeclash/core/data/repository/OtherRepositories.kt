@@ -2,6 +2,7 @@ package com.donik1998.cubeclash.core.data.repository
 
 import com.donik1998.cubeclash.core.data.mapper.toDomain
 import com.donik1998.cubeclash.core.domain.common.DataResult
+import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
 import com.donik1998.cubeclash.core.domain.repository.RaceRepository
 import com.donik1998.cubeclash.core.domain.repository.ScrambleRepository
 import com.donik1998.cubeclash.core.domain.repository.SolveRepository
@@ -12,6 +13,7 @@ import com.donik1998.cubeclash.core.model.EventStats
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
+import com.donik1998.cubeclash.core.model.PlayerProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.Scramble
@@ -63,6 +65,28 @@ class StatsRepositoryImpl @Inject constructor(
     ): DataResult<LeaderboardPage> =
         errors.call {
             api.leaderboard(event.id, metric.wire, scope.wire, cursor).toDomain(event)
+        }
+}
+
+/**
+ * The You · Profile aggregate over `GET /me/profile`. The mapper returns null when the payload
+ * has no usable identity; that null becomes a [DataResult.Failure] here rather than a success
+ * carrying a blank profile — the screen would have nothing to render either way, and a failure
+ * lets it show its retry affordance.
+ */
+@Singleton
+class ProfileRepositoryImpl @Inject constructor(
+    private val api: CubeClashApi,
+    private val errors: ApiErrorMapper,
+) : ProfileRepository {
+
+    override suspend fun profile(
+        event: WcaEvent,
+        rankScope: LeaderboardScope,
+    ): DataResult<PlayerProfile> =
+        errors.call {
+            api.profile(event.id, rankScope.wire).toDomain(event, rankScope)
+                ?: throw IllegalStateException("Profile response had no usable user.")
         }
 }
 

@@ -8,6 +8,7 @@ import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
+import com.donik1998.cubeclash.core.model.PlayerProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.Scramble
@@ -78,6 +79,19 @@ interface StatsRepository {
         scope: LeaderboardScope,
         cursor: String? = null,
     ): DataResult<LeaderboardPage>
+}
+
+interface ProfileRepository {
+    /**
+     * The You · Profile aggregate for the current viewer, scoped to [event] and [rankScope]
+     * (which only affect the rank and best-single fields). A profile that arrives without a
+     * usable identity is dropped by the mapper and surfaces here as a `DataResult.Failure`
+     * rather than a half-blank success.
+     */
+    suspend fun profile(
+        event: WcaEvent = WcaEvent.THREE,
+        rankScope: LeaderboardScope = LeaderboardScope.GLOBAL,
+    ): DataResult<PlayerProfile>
 }
 
 interface RaceRepository {

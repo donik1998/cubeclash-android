@@ -20,11 +20,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.donik1998.cubeclash.core.designsystem.theme.CubeClashTheme
 import com.donik1998.cubeclash.feature.profile.ProfileRoute
+import com.donik1998.cubeclash.feature.profile.SettingsRoute
 import com.donik1998.cubeclash.feature.race.RaceRoute
 import com.donik1998.cubeclash.feature.stats.StatsRoute
 import com.donik1998.cubeclash.feature.timer.TimerRoute
 import com.donik1998.cubeclash.navigation.ProfileDestination
 import com.donik1998.cubeclash.navigation.RaceDestination
+import com.donik1998.cubeclash.navigation.SettingsDestination
 import com.donik1998.cubeclash.navigation.StatsDestination
 import com.donik1998.cubeclash.navigation.TimerDestination
 import com.donik1998.cubeclash.navigation.TopLevelDestination
@@ -82,7 +84,16 @@ fun CubeClashApp() {
                     RaceRoute(onImmersiveChange = { immersive = it })
                 }
                 composable<StatsDestination> { StatsRoute() }
-                composable<ProfileDestination> { ProfileRoute() }
+                composable<ProfileDestination> {
+                    ProfileRoute(
+                        // Friends has no destination yet — a harmless no-op until it lands.
+                        onFriends = {},
+                        onSettings = { navController.navigate(SettingsDestination) },
+                    )
+                }
+                composable<SettingsDestination> {
+                    SettingsRoute(onBack = { navController.popBackStack() })
+                }
             }
         }
     }

@@ -138,6 +138,53 @@ data class LeaderboardResponseDto(
     val viewer: LeaderboardItemDto? = null,
 )
 
+/**
+ * The `GET /me/profile` aggregate — the six values the You · Profile screen needs in one round
+ * trip (user + rank + stats + friend count). **Every field is nullable** and every nested object
+ * is nullable, so decoding `{}` never throws; the mapper (`:core:data`) is the single place that
+ * decides what a missing field means.
+ *
+ * There is deliberately **no `avatar_url`** here or on `ProfileUserDto`: the avatar is an
+ * initials placeholder derived from `display_name`, with no wire field and no column (spec §11.1).
+ */
+@Serializable
+data class ProfileResponseDto(
+    val user: ProfileUserDto? = null,
+    /** Null when the viewer has no ranked solve in the requested `event`/`rank_scope`. */
+    val rank: ProfileRankDto? = null,
+    val stats: ProfileStatsDto? = null,
+    @SerialName("friend_count") val friendCount: Int? = null,
+)
+
+@Serializable
+data class ProfileUserDto(
+    val id: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    /** ISO 3166-1 alpha-2, nullable on the wire and nullable in the domain. */
+    val country: String? = null,
+    val elo: Int? = null,
+)
+
+@Serializable
+data class ProfileRankDto(
+    val event: String? = null,
+    val metric: String? = null,
+    val scope: String? = null,
+    val position: Int? = null,
+)
+
+@Serializable
+data class ProfileStatsDto(
+    /** Best single in milliseconds, DNF excluded. NOT the string "8.42". */
+    @SerialName("best_single_ms") val bestSingleMs: Long? = null,
+    @SerialName("best_single_event") val bestSingleEvent: String? = null,
+    @SerialName("total_solves") val totalSolves: Int? = null,
+    /** Win ratio 0..1, null when wins + losses == 0. NOT the string "68%". */
+    @SerialName("win_rate") val winRate: Double? = null,
+    val wins: Int? = null,
+    val losses: Int? = null,
+)
+
 @Serializable
 data class CreateRaceRequest(val mode: String, val event: String)
 

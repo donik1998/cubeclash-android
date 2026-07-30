@@ -4,6 +4,7 @@ import com.donik1998.cubeclash.core.data.demo.DemoSeed
 import com.donik1998.cubeclash.core.domain.common.AppError
 import com.donik1998.cubeclash.core.domain.common.DataResult
 import com.donik1998.cubeclash.core.domain.repository.AuthRepository
+import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
 import com.donik1998.cubeclash.core.domain.repository.RaceRepository
 import com.donik1998.cubeclash.core.domain.repository.SolveRepository
 import com.donik1998.cubeclash.core.domain.repository.StatsRepository
@@ -15,6 +16,7 @@ import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
 import com.donik1998.cubeclash.core.model.Penalty
+import com.donik1998.cubeclash.core.model.PlayerProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.RaceStatus
@@ -142,6 +144,17 @@ class FakeStatsRepository @Inject constructor(
         cursor: String?,
     ): DataResult<LeaderboardPage> =
         DataResult.Success(demoSeed.leaderboard(event, metric, scope))
+}
+
+@Singleton
+class FakeProfileRepository @Inject constructor(
+    private val demoSeed: DemoSeed,
+) : ProfileRepository {
+
+    override suspend fun profile(
+        event: WcaEvent,
+        rankScope: LeaderboardScope,
+    ): DataResult<PlayerProfile> = DataResult.Success(demoSeed.profile(event, rankScope))
 }
 
 @Singleton

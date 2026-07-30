@@ -2,11 +2,13 @@ package com.donik1998.cubeclash.core.data.di
 
 import com.donik1998.cubeclash.core.data.BuildConfig
 import com.donik1998.cubeclash.core.data.fake.FakeAuthRepository
+import com.donik1998.cubeclash.core.data.fake.FakeProfileRepository
 import com.donik1998.cubeclash.core.data.fake.FakeRaceRepository
 import com.donik1998.cubeclash.core.data.fake.FakeSolveRepository
 import com.donik1998.cubeclash.core.data.fake.FakeStatsRepository
 import com.donik1998.cubeclash.core.data.repository.AuthRepositoryImpl
 import com.donik1998.cubeclash.core.data.repository.LocalScrambleRepository
+import com.donik1998.cubeclash.core.data.repository.ProfileRepositoryImpl
 import com.donik1998.cubeclash.core.data.repository.RaceRepositoryImpl
 import com.donik1998.cubeclash.core.data.repository.SolveRepositoryImpl
 import com.donik1998.cubeclash.core.data.repository.StatsRepositoryImpl
@@ -14,6 +16,7 @@ import com.donik1998.cubeclash.core.domain.common.CubeClashDispatcher
 import com.donik1998.cubeclash.core.domain.common.Dispatcher
 import com.donik1998.cubeclash.core.domain.common.TimeSource
 import com.donik1998.cubeclash.core.domain.repository.AuthRepository
+import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
 import com.donik1998.cubeclash.core.domain.repository.RaceRepository
 import com.donik1998.cubeclash.core.domain.repository.ScrambleRepository
 import com.donik1998.cubeclash.core.domain.repository.SolveRepository
@@ -68,6 +71,13 @@ object RepositoryModule {
         real: Provider<StatsRepositoryImpl>,
         fake: Provider<FakeStatsRepository>,
     ): StatsRepository = if (BuildConfig.USE_FAKE_DATA) fake.get() else real.get()
+
+    @Provides
+    @Singleton
+    fun profileRepository(
+        real: Provider<ProfileRepositoryImpl>,
+        fake: Provider<FakeProfileRepository>,
+    ): ProfileRepository = if (BuildConfig.USE_FAKE_DATA) fake.get() else real.get()
 
     @Provides
     @Singleton
