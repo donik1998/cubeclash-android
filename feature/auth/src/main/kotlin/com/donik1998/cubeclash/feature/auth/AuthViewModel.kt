@@ -12,7 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 
+/** Serializable so it can ride inside the type-safe [AuthDestination] the Welcome screen pushes. */
+@Serializable
 enum class AuthMode(val label: String) { SIGN_IN("Log in"), SIGN_UP("Sign up") }
 
 data class AuthUiState(
@@ -22,6 +25,11 @@ data class AuthUiState(
     val displayName: String = "",
     val isSubmitting: Boolean = false,
     val error: String? = null,
+    /**
+     * Set once, on a successful submit, to the mode it succeeded in — `SIGN_UP` sends the caller
+     * on to profile setup, `SIGN_IN` straight into the shell. Null until then.
+     */
+    val authenticatedAs: AuthMode? = null,
 ) {
     val canSubmit: Boolean
         get() = email.contains("@") && password.length >= 8 &&
@@ -56,6 +64,7 @@ class AuthViewModel @Inject constructor(
                 it.copy(
                     isSubmitting = false,
                     error = (result as? DataResult.Failure)?.error?.message,
+                    authenticatedAs = if (result is DataResult.Success) state.mode else null,
                 )
             }
         }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,9 +23,22 @@ import com.donik1998.cubeclash.core.designsystem.theme.Spacing
 @Composable
 fun AuthRoute(
     modifier: Modifier = Modifier,
+    // Preselected by the Welcome screen: "Create an account" arrives as SIGN_UP, "I already have
+    // one" as SIGN_IN. Defaulted so the existing call sites need no change.
+    initialMode: AuthMode = AuthMode.SIGN_IN,
+    // Fired once when auth succeeds, carrying the mode: a fresh sign-up goes to profile setup, a
+    // returning sign-in goes straight to the shell. Defaulted to a no-op for existing call sites.
+    onAuthenticated: (AuthMode) -> Unit = {},
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Apply the entry mode once; user taps on the segmented control afterwards win.
+    LaunchedEffect(initialMode) { viewModel.setMode(initialMode) }
+
+    LaunchedEffect(uiState.authenticatedAs) {
+        uiState.authenticatedAs?.let(onAuthenticated)
+    }
 
     Column(
         modifier = modifier

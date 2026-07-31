@@ -28,12 +28,12 @@ import com.donik1998.cubeclash.core.designsystem.component.SegmentedControl
 import com.donik1998.cubeclash.core.designsystem.theme.CubeClashTheme
 import com.donik1998.cubeclash.core.designsystem.theme.Spacing
 import com.donik1998.cubeclash.core.model.RaceStatus
-import com.donik1998.cubeclash.core.ui.EmptyState
 import com.donik1998.cubeclash.core.ui.EventIcon
 
 @Composable
 fun RaceRoute(
     onImmersiveChange: (Boolean) -> Unit,
+    onOpenTournament: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RaceViewModel = hiltViewModel(),
 ) {
@@ -43,7 +43,18 @@ fun RaceRoute(
     if (uiState.room != null) {
         LiveRaceScreen(uiState = uiState, onAction = viewModel::onAction, modifier = modifier)
     } else {
-        RaceLobbyScreen(uiState = uiState, onAction = viewModel::onAction, modifier = modifier)
+        // The tournaments tab loads through its own ViewModel, kept out of the realtime RaceViewModel
+        // via a slot so RaceLobbyScreen stays pure and previewable.
+        RaceLobbyScreen(
+            uiState = uiState,
+            onAction = viewModel::onAction,
+            tournamentsContent = {
+                com.donik1998.cubeclash.feature.race.tournament.TournamentListRoute(
+                    onOpenTournament = onOpenTournament,
+                )
+            },
+            modifier = modifier,
+        )
     }
 }
 
@@ -52,6 +63,7 @@ fun RaceLobbyScreen(
     uiState: RaceUiState,
     onAction: (RaceAction) -> Unit,
     modifier: Modifier = Modifier,
+    tournamentsContent: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -123,11 +135,8 @@ fun RaceLobbyScreen(
                 }
             }
 
-            // A designed empty state rather than advertising a bracket that does not exist.
-            LobbyTab.TOURNAMENTS -> EmptyState(
-                title = "Tournaments — soon",
-                message = "Scheduled comps, a Global Weekly and country-vs-country brackets are on the roadmap.",
-            )
+            // The real, tappable list, injected via a slot so this screen stays pure.
+            LobbyTab.TOURNAMENTS -> tournamentsContent()
         }
     }
 }
