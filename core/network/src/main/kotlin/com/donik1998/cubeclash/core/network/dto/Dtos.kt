@@ -36,6 +36,22 @@ data class UserDto(
 @Serializable
 data class AuthResponse(val user: UserDto? = null, val tokens: TokensDto)
 
+/**
+ * The `GET /me` and `PATCH /me` envelope. The server wraps the user in `{"user": …}` exactly like
+ * register/login and `GET /users/:id` — it does **not** return a bare user object. The wrapper and
+ * the user are nullable so decoding `{}` never throws; the mapper is where a missing user becomes a
+ * dropped/failed result.
+ */
+@Serializable
+data class MeResponse(val user: UserDto? = null)
+
+/**
+ * The `POST /solves` and `PATCH /solves/:id` envelope. The server wraps the created/updated solve
+ * in `{"solve": …}` — it does **not** return a bare solve object. Nullable so `{}` never throws.
+ */
+@Serializable
+data class SolveResponse(val solve: SolveDto? = null)
+
 @Serializable
 data class RegisterRequest(
     val email: String,
@@ -94,10 +110,17 @@ data class PageDto<T>(
 @Serializable
 data class ScrambleListDto(val scrambles: List<String> = emptyList())
 
+/**
+ * `GET /stats` — the server's aggregate over all of a user's solves for one event. **Every field is
+ * nullable** so decoding `{}` never throws.
+ *
+ * The best-single value is on the wire as `best_single_ms`, NOT `best`; reading the wrong key left
+ * the field permanently null and blanked the best-single tile. `mo3` is not part of this shape.
+ */
 @Serializable
 data class StatsDto(
-    val event: String,
-    val best: Long? = null,
+    val event: String? = null,
+    @SerialName("best_single_ms") val best: Long? = null,
     val ao5: Long? = null,
     val ao12: Long? = null,
     val ao100: Long? = null,
@@ -260,6 +283,118 @@ data class RacePlayerDto(
     val ready: Boolean = false,
     @SerialName("time_ms") val timeMs: Long? = null,
     val penalty: String? = null,
+)
+
+// ---------------------------------------------------------------------------------------------
+// Social & tournaments (roadmap).
+//
+// ⚠️ The `friends` and `tournaments` modules do NOT exist on `cubeclash-backend` yet — each is a
+// bare `.module.ts` with no controller, service or routes, so every endpoint below returns 404
+// today. These shapes come from the vault's `03 Engineering/API Design.md` ("Social & tournaments
+// (roadmap)") and mirror the Flutter reference client, NOT an observed response. They MUST be
+// re-verified against a real server response before anyone trusts them. In the meantime the fake
+// repositories are the working path (`cubeclash.useFakeData=true`, the default build).
+//
+// Every field is nullable except identity, per the house rule: decoding `{}` must never throw, and
+// the mappers in `:core:data` are the single place that decides what a missing field means.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * One row of `GET /friends`. **Every field is nullable except the wire has no single required id**
+ * — `user_id` and `display_name` are load-bearing but the DTO still lets them be null so `{}`
+ * decodes; the mapper drops a row missing either. Shape is from the API Design doc (roadmap),
+ * unverified against a live server.
+ */
+@Serializable
+data class FriendDto(
+    @SerialName("user_id") val userId: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    /** `friendships.status`: `pending` | `accepted`. Unknown values map to the unknown case. */
+    val status: String? = null,
+    /** ISO 3166-1 alpha-2, nullable on the wire and nullable in the domain. */
+    val country: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("best_single_ms") val bestSingleMs: Long? = null,
+    /** True when *they* invited *you* — gates the Accept action. Missing means false. */
+    val incoming: Boolean? = null,
+)
+
+/**
+ * The `GET /friends` envelope — cursor pagination, matching every other list on this API
+ * (`{ items, next_cursor }`). Both the list and every element are nullable so `{}` never throws.
+ * Shape from the API Design doc (roadmap), unverified.
+ */
+@Serializable
+data class FriendListResponseDto(
+    val items: List<FriendDto?>? = null,
+    @SerialName("next_cursor") val nextCursor: String? = null,
+)
+
+/** Body for `POST /friends/invite`. The server resolves the query to a user. */
+@Serializable
+data class FriendInviteRequest(val query: String)
+
+/**
+ * One row of `GET /tournaments`. **Every field is nullable**; `id` and `name` are load-bearing and
+ * the mapper drops a card missing either. `entrants`/`capacity` are counts and `is_full` is
+ * deliberately NOT a wire field — the client derives fullness from the two counts so a stale server
+ * flag can never contradict them. Shape from the API Design doc (roadmap), unverified.
+ */
+@Serializable
+data class TournamentDto(
+    val id: String? = null,
+    val name: String? = null,
+    /** `WcaEvent.id`. Unknown ids degrade to 3×3 in the mapper. */
+    val event: String? = null,
+    /** `upcoming` | `live` | `finished`. Unknown values map to the unknown case. */
+    val status: String? = null,
+    val entrants: Int? = null,
+    val capacity: Int? = null,
+    /** ISO 8601 with an explicit UTC offset. Parsed leniently; unparseable stays null. */
+    @SerialName("starts_at") val startsAt: String? = null,
+    val description: String? = null,
+    /** Whether the viewer has entered. Missing means false. */
+    val registered: Boolean? = null,
+)
+
+/**
+ * The `GET /tournaments` envelope — cursor pagination like every other list. Shape from the API
+ * Design doc (roadmap), unverified.
+ */
+@Serializable
+data class TournamentListResponseDto(
+    val items: List<TournamentDto?>? = null,
+    @SerialName("next_cursor") val nextCursor: String? = null,
+)
+
+/**
+ * The `GET /tournaments/{id}` detail envelope: the tournament header plus its bracket. This detail
+ * route is NOT in the roadmap's five endpoints — it is inferred from Flutter's client (which calls
+ * it) because a [TournamentDetail] cannot be assembled without it. Doubly unverified. Every field
+ * nullable; the mapper drops the whole detail if the tournament header has no usable identity.
+ */
+@Serializable
+data class TournamentDetailResponseDto(
+    val tournament: TournamentDto? = null,
+    val rounds: List<TournamentRoundDto?>? = null,
+)
+
+/** One round of a single-elimination bracket. Shape from the client, unverified. */
+@Serializable
+data class TournamentRoundDto(
+    val name: String? = null,
+    val matches: List<TournamentMatchDto?>? = null,
+)
+
+/** One head-to-head in the bracket. Times null before a match is played. Unverified. */
+@Serializable
+data class TournamentMatchDto(
+    @SerialName("player_a") val playerA: String? = null,
+    @SerialName("player_b") val playerB: String? = null,
+    @SerialName("time_a_ms") val timeAMs: Long? = null,
+    @SerialName("time_b_ms") val timeBMs: Long? = null,
+    /** `"A"`, `"B"`, or null while pending. */
+    val winner: String? = null,
 )
 
 @Serializable

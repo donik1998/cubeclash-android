@@ -19,10 +19,3 @@ sealed interface AuthState {
     data object SignedOut : AuthState
     data class SignedIn(val user: User) : AuthState
 }
-
-data class Friend(
-    val user: User,
-    val status: FriendStatus,
-)
-
-enum class FriendStatus { ACCEPTED, PENDING_OUTGOING, PENDING_INCOMING }

@@ -85,6 +85,7 @@ object RepositoryModule {
         real: Provider<RaceRepositoryImpl>,
         fake: Provider<FakeRaceRepository>,
     ): RaceRepository = if (BuildConfig.USE_FAKE_DATA) fake.get() else real.get()
+
 }
 
 @Module

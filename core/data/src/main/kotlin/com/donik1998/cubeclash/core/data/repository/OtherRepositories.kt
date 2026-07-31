@@ -2,14 +2,17 @@ package com.donik1998.cubeclash.core.data.repository
 
 import com.donik1998.cubeclash.core.data.mapper.toDomain
 import com.donik1998.cubeclash.core.domain.common.DataResult
+import com.donik1998.cubeclash.core.domain.repository.FriendsRepository
 import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
 import com.donik1998.cubeclash.core.domain.repository.RaceRepository
 import com.donik1998.cubeclash.core.domain.repository.ScrambleRepository
 import com.donik1998.cubeclash.core.domain.repository.SolveRepository
 import com.donik1998.cubeclash.core.domain.repository.StatsRepository
+import com.donik1998.cubeclash.core.domain.repository.TournamentRepository
 import com.donik1998.cubeclash.core.domain.scramble.ScrambleGenerator
 import com.donik1998.cubeclash.core.domain.stats.SessionStatsCalculator
 import com.donik1998.cubeclash.core.model.EventStats
+import com.donik1998.cubeclash.core.model.Friend
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
@@ -17,11 +20,14 @@ import com.donik1998.cubeclash.core.model.PlayerProfile
 import com.donik1998.cubeclash.core.model.RaceMode
 import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.Scramble
+import com.donik1998.cubeclash.core.model.Tournament
+import com.donik1998.cubeclash.core.model.TournamentDetail
 import com.donik1998.cubeclash.core.model.WcaEvent
 import com.donik1998.cubeclash.core.network.ApiErrorMapper
 import com.donik1998.cubeclash.core.network.CubeClashApi
 import com.donik1998.cubeclash.core.network.call
 import com.donik1998.cubeclash.core.network.dto.CreateRaceRequest
+import com.donik1998.cubeclash.core.network.dto.FriendInviteRequest
 import com.donik1998.cubeclash.core.network.dto.JoinRaceRequest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -120,4 +126,57 @@ class RaceRepositoryImpl @Inject constructor(
 
     override suspend fun history(): DataResult<List<RaceRoom>> =
         errors.call { api.raceHistory().items.map { it.toDomain() } }
+}
+
+/**
+ * The friends list and invite/accept flow over `GET /friends` and friends.
+ *
+ * ⚠️ **These routes do not exist on `cubeclash-backend` yet** — the `friends` module is a bare
+ * `.module.ts`, so every call here 404s today. The shape is taken from the vault's API Design doc
+ * and the Flutter client, NOT an observed response, and must be re-verified once the routes exist.
+ * With `cubeclash.useFakeData=true` (the default build) this class is never constructed and
+ * `FakeFriendsRepository` runs instead.
+ */
+@Singleton
+class FriendsRepositoryImpl @Inject constructor(
+    private val api: CubeClashApi,
+    private val errors: ApiErrorMapper,
+) : FriendsRepository {
+
+    override suspend fun friends(): DataResult<List<Friend>> =
+        errors.call { api.friends().toDomain() }
+
+    override suspend fun invite(query: String): DataResult<Unit> =
+        errors.call { api.inviteFriend(FriendInviteRequest(query.trim())) }
+
+    override suspend fun accept(userId: String): DataResult<Unit> =
+        errors.call { api.acceptFriend(userId) }
+}
+
+/**
+ * The tournament lobby, bracket detail and registration.
+ *
+ * ⚠️ **These routes do not exist on `cubeclash-backend` yet** — the `tournaments` module is a bare
+ * `.module.ts`, so every call here 404s. `GET /tournaments/{id}` is not even in the roadmap's five
+ * endpoints (inferred from the Flutter client), so it is doubly unverified. Re-verify all shapes
+ * once the routes exist. With `cubeclash.useFakeData=true` this class is never constructed and
+ * `FakeTournamentRepository` runs instead.
+ */
+@Singleton
+class TournamentRepositoryImpl @Inject constructor(
+    private val api: CubeClashApi,
+    private val errors: ApiErrorMapper,
+) : TournamentRepository {
+
+    override suspend fun tournaments(): DataResult<List<Tournament>> =
+        errors.call { api.tournaments().toDomain() }
+
+    override suspend fun tournament(id: String): DataResult<TournamentDetail> =
+        errors.call {
+            api.tournament(id).toDomain()
+                ?: throw IllegalStateException("Tournament detail had no usable tournament.")
+        }
+
+    override suspend fun register(id: String): DataResult<Unit> =
+        errors.call { api.registerForTournament(id) }
 }

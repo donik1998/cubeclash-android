@@ -1,6 +1,8 @@
 package com.donik1998.cubeclash.core.data.demo
 
 import com.donik1998.cubeclash.core.domain.scramble.ScrambleGenerator
+import com.donik1998.cubeclash.core.model.Friend
+import com.donik1998.cubeclash.core.model.FriendStatus
 import com.donik1998.cubeclash.core.model.LeaderboardEntry
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
@@ -13,6 +15,11 @@ import com.donik1998.cubeclash.core.model.PublicProfile
 import com.donik1998.cubeclash.core.model.ScrambleSource
 import com.donik1998.cubeclash.core.model.Solve
 import com.donik1998.cubeclash.core.model.SyncState
+import com.donik1998.cubeclash.core.model.Tournament
+import com.donik1998.cubeclash.core.model.TournamentDetail
+import com.donik1998.cubeclash.core.model.TournamentMatch
+import com.donik1998.cubeclash.core.model.TournamentRound
+import com.donik1998.cubeclash.core.model.TournamentStatus
 import com.donik1998.cubeclash.core.model.User
 import com.donik1998.cubeclash.core.model.WcaEvent
 import java.time.Instant
@@ -195,6 +202,144 @@ class DemoSeed @Inject constructor(
             bestAo12Ms = 6_600L + random.nextInt(3_000),
             headToHead = HeadToHead(wins = random.nextInt(6), losses = random.nextInt(6)),
         )
+    }
+
+    /**
+     * A demoable friends list. Deliberately mixed so every state on the Friends screen is
+     * reachable offline: several accepted friends (one with no country, one with no best single),
+     * a pending request the viewer sent, and — the one the register-flow demo needs — an
+     * **incoming** request that the Accept action can act on.
+     */
+    fun friends(): List<Friend> = listOf(
+        Friend(
+            userId = "f-kian",
+            displayName = "kian_r",
+            status = FriendStatus.ACCEPTED,
+            countryCode = "IR",
+            bestSingleMs = 6_310,
+        ),
+        Friend(
+            userId = "f-mira",
+            displayName = "mira_v",
+            status = FriendStatus.ACCEPTED,
+            countryCode = "DE",
+            bestSingleMs = 7_020,
+        ),
+        Friend(
+            // No country and no best single: the row must still render.
+            userId = "f-sora",
+            displayName = "sora_h",
+            status = FriendStatus.ACCEPTED,
+            countryCode = null,
+            bestSingleMs = null,
+        ),
+        Friend(
+            // Outgoing request the viewer sent: pending, not incoming, no Accept button.
+            userId = "f-owen",
+            displayName = "owen_p",
+            status = FriendStatus.PENDING,
+            countryCode = "GB",
+            bestSingleMs = 9_140,
+            incoming = false,
+        ),
+        Friend(
+            // Incoming request: this is the row the Accept action exists for.
+            userId = "f-aiko",
+            displayName = "aiko_m",
+            status = FriendStatus.PENDING,
+            countryCode = "JP",
+            bestSingleMs = 5_880,
+            incoming = true,
+        ),
+    )
+
+    /**
+     * A demoable tournament slate. Mixed on purpose so every edge state is reachable offline: one
+     * **live** and **full** bracket (exercises the "full / can't register" path), an upcoming one
+     * with room, an already-registered one, and a finished one.
+     */
+    fun tournaments(): List<Tournament> {
+        val now = Instant.now()
+        return listOf(
+            Tournament(
+                id = "weekly-333",
+                name = "Global Weekly · 3×3",
+                event = WcaEvent.THREE,
+                status = TournamentStatus.LIVE,
+                entrants = 64,
+                capacity = 64, // full: entrants == capacity, so isFull is true
+                startsAt = now.minus(20, ChronoUnit.MINUTES),
+                description = "Open 64-player single elimination. New bracket every Sunday.",
+            ),
+            Tournament(
+                id = "sub15-sprint",
+                name = "Sub-15 Sprint",
+                event = WcaEvent.THREE,
+                status = TournamentStatus.UPCOMING,
+                entrants = 22,
+                capacity = 32,
+                startsAt = now.plus(3, ChronoUnit.HOURS),
+                description = "For sub-15 averages only. Fast games, best of three.",
+            ),
+            Tournament(
+                id = "oh-invitational",
+                name = "One-Handed Invitational",
+                event = WcaEvent.THREE_OH,
+                status = TournamentStatus.UPCOMING,
+                entrants = 12,
+                capacity = 16,
+                startsAt = now.plus(26, ChronoUnit.HOURS),
+                description = "Sixteen seeds, one hand. Seeded by One-Handed ranking.",
+                registered = true, // already-registered path
+            ),
+            Tournament(
+                id = "2x2-blitz",
+                name = "2×2 Blitz",
+                event = WcaEvent.TWO,
+                status = TournamentStatus.FINISHED,
+                entrants = 32,
+                capacity = 32,
+                startsAt = now.minus(2, ChronoUnit.DAYS),
+                description = "Thirty-two players, one weekend, decided in under an hour.",
+            ),
+        )
+    }
+
+    /**
+     * A demoable bracket for [tournament] — two rounds, the earlier one already played (so the UI
+     * shows results) and the later one pending (times null, no winner). Seeded off the id so the
+     * bracket is stable per tournament.
+     */
+    fun bracket(tournament: Tournament): TournamentDetail {
+        val random = Random(tournament.id.hashCode())
+        fun t(): Long = 6_000L + random.nextInt(4_000)
+        val semis = TournamentRound(
+            name = "Semifinals",
+            matches = listOf(
+                TournamentMatch(
+                    playerA = "kian_r",
+                    playerB = "mira_v",
+                    timeAMs = t(),
+                    timeBMs = t(),
+                    winner = "A",
+                ),
+                TournamentMatch(
+                    playerA = "sora_h",
+                    playerB = "owen_p",
+                    timeAMs = t(),
+                    timeBMs = t(),
+                    winner = "B",
+                ),
+            ),
+        )
+        val final = TournamentRound(
+            name = "Final",
+            matches = listOf(
+                // Not yet played: times null, winner null — the pending state.
+                TournamentMatch(playerA = "kian_r", playerB = "owen_p"),
+            ),
+        )
+        return TournamentDetail(tournament = tournament, rounds = listOf(semis, final))
     }
 
     private fun leaderboardCentreMsFor(event: WcaEvent): Long = when (event.resultKind) {

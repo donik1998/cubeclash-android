@@ -4,14 +4,18 @@ import com.donik1998.cubeclash.core.data.demo.DemoSeed
 import com.donik1998.cubeclash.core.domain.common.AppError
 import com.donik1998.cubeclash.core.domain.common.DataResult
 import com.donik1998.cubeclash.core.domain.repository.AuthRepository
+import com.donik1998.cubeclash.core.domain.repository.FriendsRepository
 import com.donik1998.cubeclash.core.domain.repository.ProfileRepository
 import com.donik1998.cubeclash.core.domain.repository.RaceRepository
 import com.donik1998.cubeclash.core.domain.repository.SolveRepository
 import com.donik1998.cubeclash.core.domain.repository.StatsRepository
+import com.donik1998.cubeclash.core.domain.repository.TournamentRepository
 import com.donik1998.cubeclash.core.domain.repository.UserRepository
 import com.donik1998.cubeclash.core.domain.stats.SessionStatsCalculator
 import com.donik1998.cubeclash.core.model.AuthState
 import com.donik1998.cubeclash.core.model.EventStats
+import com.donik1998.cubeclash.core.model.Friend
+import com.donik1998.cubeclash.core.model.FriendStatus
 import com.donik1998.cubeclash.core.model.LeaderboardMetric
 import com.donik1998.cubeclash.core.model.LeaderboardPage
 import com.donik1998.cubeclash.core.model.LeaderboardScope
@@ -23,6 +27,8 @@ import com.donik1998.cubeclash.core.model.RaceRoom
 import com.donik1998.cubeclash.core.model.RaceStatus
 import com.donik1998.cubeclash.core.model.Solve
 import com.donik1998.cubeclash.core.model.SyncState
+import com.donik1998.cubeclash.core.model.Tournament
+import com.donik1998.cubeclash.core.model.TournamentDetail
 import com.donik1998.cubeclash.core.model.User
 import com.donik1998.cubeclash.core.model.WcaEvent
 import javax.inject.Inject
@@ -192,4 +198,86 @@ class FakeRaceRepository @Inject constructor() : RaceRepository {
     )
 
     override suspend fun history(): DataResult<List<RaceRoom>> = DataResult.Success(emptyList())
+}
+
+/**
+ * The in-memory Friends screen. Seeded from [DemoSeed.friends] and **stateful**: accepting an
+ * incoming request flips it to accepted in place, and inviting appends a pending outgoing row —
+ * so the whole friends flow is demoable end to end with no server.
+ */
+@Singleton
+class FakeFriendsRepository @Inject constructor(
+    private val demoSeed: DemoSeed,
+) : FriendsRepository {
+
+    private val state = MutableStateFlow(demoSeed.friends())
+
+    override suspend fun friends(): DataResult<List<Friend>> = DataResult.Success(state.value)
+
+    override suspend fun invite(query: String): DataResult<Unit> {
+        val q = query.trim()
+        if (q.isEmpty()) {
+            return DataResult.Failure(AppError.Validation("Enter a username to invite."))
+        }
+        // Append a pending, outgoing request so the demo shows the row appear.
+        state.value = state.value + Friend(
+            userId = "invited-${q.lowercase()}",
+            displayName = q,
+            status = FriendStatus.PENDING,
+            incoming = false,
+        )
+        return DataResult.Success(Unit)
+    }
+
+    override suspend fun accept(userId: String): DataResult<Unit> {
+        val target = state.value.firstOrNull { it.userId == userId }
+            ?: return DataResult.Failure(AppError.NotFound("That request is gone."))
+        if (!target.incoming) {
+            return DataResult.Failure(AppError.Validation("Only incoming requests can be accepted."))
+        }
+        state.value = state.value.map {
+            if (it.userId == userId) {
+                it.copy(status = FriendStatus.ACCEPTED, incoming = false)
+            } else {
+                it
+            }
+        }
+        return DataResult.Success(Unit)
+    }
+}
+
+/**
+ * The in-memory Tournaments screen. Seeded from [DemoSeed.tournaments] and **stateful**:
+ * registering bumps the entrant count and flips [Tournament.registered] in place, and rejects a
+ * full or already-registered bracket exactly as the real flow would — so the register flow is
+ * demoable end to end. The detail view is served by [DemoSeed.bracket].
+ */
+@Singleton
+class FakeTournamentRepository @Inject constructor(
+    private val demoSeed: DemoSeed,
+) : TournamentRepository {
+
+    private val state = MutableStateFlow(demoSeed.tournaments())
+
+    override suspend fun tournaments(): DataResult<List<Tournament>> =
+        DataResult.Success(state.value)
+
+    override suspend fun tournament(id: String): DataResult<TournamentDetail> {
+        val tournament = state.value.firstOrNull { it.id == id }
+            ?: return DataResult.Failure(AppError.NotFound("That tournament could not be found."))
+        return DataResult.Success(demoSeed.bracket(tournament))
+    }
+
+    override suspend fun register(id: String): DataResult<Unit> {
+        val current = state.value.firstOrNull { it.id == id }
+            ?: return DataResult.Failure(AppError.NotFound("That tournament is gone."))
+        if (current.registered) return DataResult.Success(Unit)
+        if (current.isFull) {
+            return DataResult.Failure(AppError.Validation("This bracket is full."))
+        }
+        state.value = state.value.map {
+            if (it.id == id) it.copy(registered = true, entrants = it.entrants + 1) else it
+        }
+        return DataResult.Success(Unit)
+    }
 }

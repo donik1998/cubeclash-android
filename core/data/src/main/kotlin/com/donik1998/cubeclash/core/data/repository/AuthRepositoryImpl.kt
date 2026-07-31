@@ -12,6 +12,7 @@ import com.donik1998.cubeclash.core.network.ApiErrorMapper
 import com.donik1998.cubeclash.core.network.CubeClashApi
 import com.donik1998.cubeclash.core.network.call
 import com.donik1998.cubeclash.core.network.dto.LoginRequest
+import com.donik1998.cubeclash.core.network.dto.RefreshRequest
 import com.donik1998.cubeclash.core.network.dto.RegisterRequest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -70,16 +71,23 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
     override suspend fun signOut(): DataResult<Unit> {
-        // Local sign-out happens regardless: a failed logout call must not trap someone in a
-        // session they have already left.
-        val result = errors.call { api.logout() }
+        // Revocation is by refresh token: the server 400s a body-less logout and never revokes,
+        // so the token must be read out and sent *before* the local clear.
+        val refresh = tokenStore.refreshToken()
+        val result = refresh?.let { token -> errors.call { api.logout(RefreshRequest(token)) } }
+            ?: DataResult.Success(Unit)
         tokenStore.clear()
         cachedUser.value = null
+        // Local sign-out happens regardless: a failed logout call must not trap someone in a
+        // session they have already left.
         return if (result is DataResult.Failure) DataResult.Success(Unit) else result
     }
 
     override suspend fun refreshMe(): DataResult<User> =
-        errors.call { api.me().toDomain() }.let { result ->
+        errors.call {
+            api.me().user?.toDomain()
+                ?: throw IllegalStateException("GET /me response had no user object.")
+        }.let { result ->
             if (result is DataResult.Success) cachedUser.value = result.data
             result
         }
@@ -91,7 +99,8 @@ class AuthRepositoryImpl @Inject constructor(
                     displayName?.let { put("display_name", it) }
                     country?.let { put("country", it) }
                 },
-            ).toDomain()
+            ).user?.toDomain()
+                ?: throw IllegalStateException("PATCH /me response had no user object.")
         }.let { result ->
             if (result is DataResult.Success) cachedUser.value = result.data
             result

@@ -49,10 +49,14 @@ class SolveRepositoryImpl @Inject constructor(
         return errors.call { api.createSolve(solve.toRequest()) }
             .let { result ->
                 when (result) {
-                    is DataResult.Success -> {
-                        val synced = result.data.toDomain(SyncState.SYNCED)
-                        dao.upsert(synced.toEntity())
-                        DataResult.Success(synced)
+                    // The server wraps the created row in `{"solve": …}`. A present envelope with a
+                    // null solve is a sync problem, not a lost attempt — fall back to the local copy.
+                    is DataResult.Success -> when (val synced = result.data.solve?.toDomain(SyncState.SYNCED)) {
+                        null -> DataResult.Success(solve)
+                        else -> {
+                            dao.upsert(synced.toEntity())
+                            DataResult.Success(synced)
+                        }
                     }
                     // The solve is already on disk and already on screen. A failed push is a
                     // sync problem, not a lost attempt.
@@ -71,10 +75,12 @@ class SolveRepositoryImpl @Inject constructor(
         return errors.call { api.updatePenalty(local.id, UpdatePenaltyRequest(penalty.wire)) }
             .let { result ->
                 when (result) {
-                    is DataResult.Success -> {
-                        val synced = result.data.toDomain(SyncState.SYNCED)
-                        dao.upsert(synced.toEntity())
-                        DataResult.Success(synced)
+                    is DataResult.Success -> when (val synced = result.data.solve?.toDomain(SyncState.SYNCED)) {
+                        null -> DataResult.Success(local)
+                        else -> {
+                            dao.upsert(synced.toEntity())
+                            DataResult.Success(synced)
+                        }
                     }
 
                     is DataResult.Failure -> DataResult.Success(local)
